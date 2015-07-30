@@ -1,5 +1,7 @@
 readarray fileDat < $1
 QUANTUM=${fileDat[${#fileDat[@]}-1]} 
+
+
 unset fileDat[${#fileDat[@]}-1] #remove quantum 
 PROCESSCOUNT=${#fileDat[@]} 
 totalTurnAroundTime=0
@@ -8,11 +10,20 @@ if [ $QUANTUM -lt 3 ] || [ $QUANTUM -gt 10 ] ; then
   echo "ERROR: Quantum must be between 3 to 10"
   exit
 fi
+IFS=$'\n' 
+fileDat=($(for each in ${fileDat[@]}; do
+  echo $each
+done | sort -n -k4,4nr -k2,2 ))
+unset IFS
+# fileDat=$(for el in "${fileDat[@]}"     ## Sorts input by priority then by arrival time
+# do
+#     echo "$el"
+# done | sort -n -k4,4nr -k2,2 )
 
-for el in "${fileDat[@]}"     ## Sorts input by priority
-do
-    echo "$el"
-done | sort -t' ' -n -k4,4 -k2,2
+
+
+# echo TESTING: ${fileDat[@]}
+# echo ${fileDat[0]}
 
 function printProcess() {
   process=($1)
@@ -31,71 +42,62 @@ function printProcess() {
   echo Priority: $priority
   echo 
 }
-for process in "${fileDat[@]}"
-do
-   printProcess "$process"
+echo Quantum: $QUANTUM
+echo
+echo "~~~ Round Robin (RRBN) Scheduling ~~~"
+echo
+
+for process in "${fileDat[@]}"; do
+  echo $process
 done
 
-echo Quantum: $QUANTUM
-
 currentTime=0
-arrivedProcess=()
   echo -------------------------------------------------------
+  echo Grantt Chart
+  printf "0 "
 while [ ${#fileDat[@]} -gt 0 ]; do
   count=0
-
-  for process in "${fileDat[@]}"      #Moves arrived process to arrivedProcess array 
+  for process in "${fileDat[@]}"
     do
       processSeparated=($process)
       arrivalTime=${processSeparated[1]}
-      # echo PRocess Separated = ${processSeparated[2]}
-      # echo Current Time: $currentTime  Arrival Time: $arrivalTime
+      # echo ${processSeparated[0]} and count is $count
+      # echo ${processSeparated[0]} - Current Time: $currentTime - ArrivalTime: $arrivalTime
       if ! [ $arrivalTime -gt $currentTime ] ; then
-        # echo "--------" 
-        printf "| "${processSeparated[0]} "|"
-        # echo "--------"
-        # echo $process
-        # echo Before Quantum - ${processSeparated[2]}
-        let currentTime=currentTime+$(($QUANTUM>${processSeparated[2]} ?${processSeparated[2]}:$QUANTUM))
-        let processSeparated[2]=${processSeparated[2]}-$QUANTUM 
-        process="${processSeparated[*]}"
-        # fileDat[count]=$process
-        # echo After - ${#fileDat[@]}
-        if [ ${processSeparated[2]} -lt 1 ] ; then
-          # echo Remove - Before: ${#fileDat[@]} 
-          # fileDat=("${fileDat[@]:$count}")
-          # echo DELETING IS NOT WORKING WTF $count
-          let totalTurnAroundTime="$totalTurnAroundTime + (currentTime-$processSeparated[1])"
 
+        let currentTime=currentTime+$(($QUANTUM>${processSeparated[2]} ?${processSeparated[2]}:$QUANTUM))
+        echo -n  [${processSeparated[0]}] $currentTime' '
+        if [ -z "${processSeparated[4]}" ]; then
+          let processSeparated[4]=${processSeparated[2]}-$QUANTUM 
+        else
+          let processSeparated[4]=${processSeparated[4]}-$QUANTUM 
+        fi
+        process="${processSeparated[*]}"
+        if [ ${processSeparated[4]} -lt 1 ] ; then
+          let turnAroundTime="currentTime-${processSeparated[1]}"
+          let totalWaitingTime="$totalWaitingTime + $turnAroundTime - ${processSeparated[2]}"
+          let totalTurnAroundTime="$totalTurnAroundTime + $turnAroundTime"
           unset fileDat[$count]
-          # echo Remove - After: ${#fileDat[@]} 
-          # fileDat=("${fileDat[@]:$count}")
-          # echo After - ${#fileDat[@]}
         else
           fileDat[count]=$process
         fi
-        # echo After Quantum - ${processSeparated[2]}
-
-        # echo $process
-        # echo Size of Array: ${#fileDat[@]}
-        # echo Arrived Process is: $arrivedProcess
-        # echo ${#arrivedProcess[@]}
       fi
-      # sleep 0.250
-      # echo Count is $count
+      sleep 0.250
       let count=count+1
   done
   fileDat=("${fileDat[@]}")
 done
   let averageTurnaroundTime=totalTurnAroundTime/PROCESSCOUNT
-  # averageTurnaroundTime = 
+  let averageWaitingTime=totalWaitingTime/PROCESSCOUNT
   echo
   echo -------------------------------------------------------
   echo
   echo
-  echo Total Time Elapsed:  $currentTime
-  echo Total Turnaround Time : $totalTurnAroundTime
-  echo Average Turnaround Time : $averageTurnaroundTime
+  echo "Total   Time Elapsed    :"  $currentTime
+  echo "Total   Turnaround Time :" $totalTurnAroundTime
+  echo "Average Turnaround Time :" $averageTurnaroundTime
+  echo "Total   Waiting Time    :" $totalWaitingTime
+  echo "Average Waiting Time    :" $averageWaitingTime
   echo
   echo "~~~ END: Round Robin (RRBN) Scheduling ~~~"
   echo
