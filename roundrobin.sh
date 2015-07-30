@@ -33,6 +33,11 @@ function printProcess() {
   echo Priority: $priority
   echo 
 }
+
+for process in "${fileDat[@]}"
+do
+   printProcess "$process"
+done
 echo Quantum: $QUANTUM
 echo
 echo "~~~ Round Robin (RRBN) Scheduling ~~~"
