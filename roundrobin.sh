@@ -1,56 +1,21 @@
-readarray fileDat < $1
-QUANTUM=${fileDat[${#fileDat[@]}-1]} 
+. readprocessinput.sh
 
+printFile
 
-unset fileDat[${#fileDat[@]}-1] #remove quantum 
-PROCESSCOUNT=${#fileDat[@]} 
-totalTurnAroundTime=0
-# checks
-if [ $QUANTUM -lt 3 ] || [ $QUANTUM -gt 10 ] ; then
-  echo "ERROR: Quantum must be between 3 to 10"
-  exit
-fi
 IFS=$'\n' 
 fileDat=($(for each in ${fileDat[@]}; do
   echo $each
 done | sort -n -k4,4nr -k2,2 ))
 unset IFS
 
-function printProcess() {
-  process=($1)
-  if [ -z $process ] ; then
-    return
-  fi
-  
-  processName=${process[0]}
-  arrival=${process[1]}
-  burst=${process[2]}
-  priority=${process[3]}
-  
-  echo Process Name: $processName
-  echo Arrival Time: $arrival
-  echo Burst Time: $burst
-  echo Priority: $priority
-  echo 
-}
-
-for process in "${fileDat[@]}"
-do
-   printProcess "$process"
-done
-echo Quantum: $QUANTUM
-echo
-echo "~~~ Round Robin (RRBN) Scheduling ~~~"
-echo
-
-for process in "${fileDat[@]}"; do
-  echo $process
-done
-
 currentTime=0
-  echo -------------------------------------------------------
+  echo
+  echo
+  echo "~~~ Round Robin (RRBN) Scheduling ~~~"
+  echo 
+  echo
   echo Grantt Chart
-  printf "0 "
+  printf " 0 "
 while [ ${#fileDat[@]} -gt 0 ]; do
   count=0
   # has_element_not_queued=false
@@ -65,36 +30,27 @@ while [ ${#fileDat[@]} -gt 0 ]; do
     for process in "$fileDat[@]}"; do
       processSeparated=($process)
       unset ${processSeparated[5]}
-      # echo "Unsetting!" $has_element_not_queued
     done
   fi
-  # for process in "${fileDat[@]}"; do
-  #   echo $process
-  # done
-
   unset hasElementUpdated
   for process in "${fileDat[@]}"
     do
       processSeparated=($process)
       arrivalTime=${processSeparated[1]}
-      # echo ${processSeparated[0]} and count is $count
-      # echo ${processSeparated[0]} - Current Time: $currentTime - ArrivalTime: $arrivalTime
-      # echo Count is: $count
       if  [ ! $arrivalTime -gt $currentTime ] ; then
         processSeparated[5]=true
         hasElementUpdated=false
         if ! [ -z $idleTime ]; then
-          # echo "TESTING TESTING"
-          echo -n  "[IDLE]" $currentTime' '
+          echo -n  "[*IDLE*]" $currentTime' '
           unset idleTime
         fi
-        let currentTime=currentTime+$(($QUANTUM>${processSeparated[2]} ?${processSeparated[2]}:$QUANTUM))
+        let currentTime=currentTime+$(($quantum>${processSeparated[2]} ?${processSeparated[2]}:$quantum))
 
         echo -n  [${processSeparated[0]}] $currentTime' '
         if [ -z "${processSeparated[4]}" ]; then
-          let processSeparated[4]=${processSeparated[2]}-$QUANTUM 
+          let processSeparated[4]=${processSeparated[2]}-$quantum 
         else
-          let processSeparated[4]=${processSeparated[4]}-$QUANTUM 
+          let processSeparated[4]=${processSeparated[4]}-$quantum 
         fi
         process="${processSeparated[*]}"
         if [ ${processSeparated[4]} -lt 1 ] ; then
@@ -106,7 +62,6 @@ while [ ${#fileDat[@]} -gt 0 ]; do
           fileDat[count]=$process
         fi
       fi
-      # sleep 0.250
       let count=count+1
   done
   if [ -z $hasElementUpdated ] ; then
@@ -116,13 +71,11 @@ while [ ${#fileDat[@]} -gt 0 ]; do
   fi
   fileDat=("${fileDat[@]}")
 done
-  let averageTurnaroundTime=totalTurnAroundTime/PROCESSCOUNT
-  let averageWaitingTime=totalWaitingTime/PROCESSCOUNT
-  echo
-  echo -------------------------------------------------------
+  let averageTurnaroundTime=totalTurnAroundTime/processCount
+  let averageWaitingTime=totalWaitingTime/processCount
   echo
   echo
-  echo "Total   Time Elapsed    :"  $currentTime
+  echo
   echo "Total   Turnaround Time :" $totalTurnAroundTime
   echo "Average Turnaround Time :" $averageTurnaroundTime
   echo "Total   Waiting Time    :" $totalWaitingTime
