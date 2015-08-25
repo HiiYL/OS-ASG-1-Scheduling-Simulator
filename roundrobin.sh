@@ -20,24 +20,20 @@ function checkIdle()
       process=${fileDat[$index]}
       processSeparated=($process)
       arrivalTime=${processSeparated[1]}
-      if [ $arrivalTime -gt $currentTime ] && [ -z $objectRemoved ] ; then
+      if [ $arrivalTime -gt $currentTime ] ; then
         let currentTime=arrivalTime
         echo -n [*IDLE*] $currentTime' '
+        addProcessToArray
       fi
-      unset objectRemoved
       break
     done
   fi
 }
 ARRIVED_PROCESSES=()
-IFS=$'\n' 
-fileDat=($(for each in ${fileDat[@]}; do
-  echo $each
-done | sort -n -k2,2 ))
-unset IFS
 currentTime=0
 while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
   addProcessToArray
+  checkIdle
   for index in "${!ARRIVED_PROCESSES[@]}"; do
     process=${ARRIVED_PROCESSES[$index]}
     processSeparated=($process)
@@ -47,7 +43,6 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
       let currentTime=currentTime+processSeparated[2]
       unset ARRIVED_PROCESSES[$index]
       echo -n  [${processSeparated[0]}] $currentTime' '
-      objectRemoved=true
     else
       let processSeparated[2]=processSeparated[2]-quantum
       let currentTime=currentTime+quantum
@@ -60,7 +55,7 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
     fi
     break
   done
-  checkIdle
+
 done
 echo
 
