@@ -1,5 +1,4 @@
 . readprocessinput.sh
-
 printFile
 function addProcessToArray()
 {
@@ -7,6 +6,8 @@ function addProcessToArray()
     inner_process=${fileDat[$count]}
     inner_processSeparated=($inner_process)
     inner_arrivalTime=${inner_processSeparated[1]}
+    inner_processSeparated[4]=${inner_processSeparated[2]} #Backup burst to slot 4
+    inner_process="${inner_processSeparated[*]}"
     if [ ! $inner_arrivalTime -gt $currentTime ] ; then
       ARRIVED_PROCESSES+=("$inner_process")
       unset fileDat[$count]
@@ -15,7 +16,7 @@ function addProcessToArray()
 }
 function checkIdle()
 {
-  if [ ! ${#ARRIVED_PROCESSES[@]} -gt 1 ]; then
+  if [ ! ${#ARRIVED_PROCESSES[@]} -gt 0 ]; then
     for index in "${!fileDat[@]}" ; do
       process=${fileDat[$index]}
       processSeparated=($process)
@@ -29,6 +30,8 @@ function checkIdle()
     done
   fi
 }
+totalTurnAroundTime=0
+totalWaitingTime=0
 ARRIVED_PROCESSES=()
 currentTime=0
 while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
@@ -41,7 +44,8 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
     processName=${processSeparated[0]}
     if [ ! ${processSeparated[2]} -gt $quantum ] ; then
       let currentTime=currentTime+processSeparated[2]
-      unset ARRIVED_PROCESSES[$index]
+      let totalWaitingTime=totalWaitingTime+currentTime-processSeparated[4]
+      let totalTurnAroundTime=totalTurnAroundTime+currentTime-processSeparated[1]
       echo -n  [${processSeparated[0]}] $currentTime' '
     else
       let processSeparated[2]=processSeparated[2]-quantum
@@ -51,14 +55,20 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
       addProcessToArray
       echo -n  [${processSeparated[0]}] $currentTime' '
       ARRIVED_PROCESSES+=("${ARRIVED_PROCESSES[$index]}")
-      unset ARRIVED_PROCESSES[$index]
     fi
+    unset ARRIVED_PROCESSES[$index]
     break
   done
-
 done
 echo
-
+echo
+echo "Total   Turnaround Time : "$totalTurnAroundTime
+echo "Total   Waiting Time    :" $totalWaitingTime
+echo -n "Average Turnaround Time : "; bc <<< 'scale=2;'$totalTurnAroundTime'/'$processCount
+echo -n "Average Waiting Time    : "; bc <<< 'scale=2;'$totalWaitingTime'/'$processCount
+echo
+echo "~~~ END: Round Robin (RRBN) Scheduling ~~~"
+echo
 
 
 
