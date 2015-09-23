@@ -1,6 +1,6 @@
 . readprocessinput.sh
 printFile
-function addProcessToArray()
+function addArrivedProcessToArray()
 {
   for count in "${!fileDat[@]}"; do
     inner_process=${fileDat[$count]}
@@ -24,7 +24,7 @@ function checkIdle()
       if [ $arrivalTime -gt $currentTime ] ; then
         let currentTime=arrivalTime
         echo -n [*IDLE*] $currentTime' '
-        addProcessToArray
+        addArrivedProcessToArray
       fi
       break
     done
@@ -34,32 +34,43 @@ totalTurnAroundTime=0
 totalWaitingTime=0
 ARRIVED_PROCESSES=()
 currentTime=0
+
+IFS=$'\n' ##sort processes according to arrival time
+fileDat=($(for each in ${fileDat[@]}; do
+  echo $each
+done | sort -n -k2,2 ))
+unset IFS
+
 while [ ${#fileDat[@]} -gt 0 ] || [ ${#ARRIVED_PROCESSES[@]} -gt 0 ]; do
-  addProcessToArray
+  addArrivedProcessToArray
   checkIdle
   for index in "${!ARRIVED_PROCESSES[@]}"; do
     process=${ARRIVED_PROCESSES[$index]}
     processSeparated=($process)
-    arrivalTime=${processSeparated[1]}
     processName=${processSeparated[0]}
-    if [ ! ${processSeparated[2]} -gt $quantum ] ; then
-      let currentTime=currentTime+processSeparated[2]
-      let totalWaitingTime=totalWaitingTime+currentTime-processSeparated[4]
-      let totalTurnAroundTime=totalTurnAroundTime+currentTime-processSeparated[1]
-      echo -n  [${processSeparated[0]}] $currentTime' '
+    arrivalTime=${processSeparated[1]}
+    burstTime=${processSeparated[2]}
+    backupBurstTime=${processSeparated[4]}
+
+    if [ ! $burstTime -gt $quantum ] ; then
+      let currentTime=currentTime+burstTime
+      let totalWaitingTime=totalWaitingTime+currentTime-arrivalTime-backupBurstTime
+      let totalTurnAroundTime=totalTurnAroundTime+currentTime-arrivalTime
+      echo -n  [$processName] $currentTime' '
     else
       let processSeparated[2]=processSeparated[2]-quantum
       let currentTime=currentTime+quantum
       process="${processSeparated[*]}"
       ARRIVED_PROCESSES[$index]=$process
-      addProcessToArray
-      echo -n  [${processSeparated[0]}] $currentTime' '
+      addArrivedProcessToArray
+      echo -n  [$processName] $currentTime' '
       ARRIVED_PROCESSES+=("${ARRIVED_PROCESSES[$index]}")
     fi
     unset ARRIVED_PROCESSES[$index]
     break
   done
 done
+
 echo
 echo
 echo "Total   Turnaround Time : "$totalTurnAroundTime

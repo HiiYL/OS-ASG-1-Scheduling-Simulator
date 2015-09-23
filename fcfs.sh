@@ -6,7 +6,7 @@
 printFile
 
 echo
-echo "~~~ Shortest Time Remaining Next (STRN) Scheduling ~~~"
+echo "~~~ Pre-emptive FCFS Scheduling ~~~"
 echo
 
 strnProcesses=("${fileDat[@]}") 
@@ -91,7 +91,7 @@ while [ ${#strnProcesses[@]} -gt 0 ] || [ ${#arrivedProcesses[@]} -gt 0 ]; do
 
 	## Choose process based on shortest burst time
 	count=0
-	shortestBurst=9999999
+	highestPriority=9999999
 	if [ ${#arrivedProcesses[@]} -gt 0 ]; then
 		# choose an arrived process based on shortest burst time
 		until [ $count -ge $arrivedProcessesIdx ]; do
@@ -102,10 +102,10 @@ while [ ${#strnProcesses[@]} -gt 0 ] || [ ${#arrivedProcesses[@]} -gt 0 ]; do
 				continue
 			fi
 			
-			currentBurst=${process[4]}
+			currentPriority=${process[3]}
 			
-			if [ $currentBurst -lt $shortestBurst ]; then
-				shortestBurst=$currentBurst
+			if [ $currentPriority -lt $highestPriority ]; then
+				highestPriority=$currentPriority
 				chosenProcessIdx=$count
 			fi
 			
@@ -158,5 +158,5 @@ echo "Total   Waiting Time    :" $totalWaitingTime
 echo -n "Average Turnaround Time : "; bc <<< 'scale=2;'$totalTurnAroundTime'/'$processCount
 echo -n "Average Waiting Time    : "; bc <<< 'scale=2;'$totalWaitingTime'/'$processCount
 echo
-echo "~~~ END: Shortest Time Remaining Next (STRN) Scheduling ~~~"
+echo "~~~ END: Pre-emptive FCFS Scheduling ~~~"
 echo

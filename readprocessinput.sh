@@ -20,7 +20,7 @@ unset fileDat[${#fileDat[@]}-1] #remove quantum
 processCount=${#fileDat[@]} 
 
 # checks
-if [ $quantum -lt 3 ] || [ $quantum -gt 10 ] ; then
+if [ $quantum -lt 2 ] || [ $quantum -gt 10 ] ; then
   echo "ERROR: Quantum must be between 3 to 10"
   exit
 fi
