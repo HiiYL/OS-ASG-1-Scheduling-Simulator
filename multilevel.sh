@@ -34,34 +34,14 @@ currentTime=0
 IFS=$'\n' ##sort processes according to arrival time
 fileDat=($(for each in ${fileDat[@]}; do
   echo $each
-done | sort -n -k4,4 -k2,2 ))
+done | sort -n -k2,2 ))
 unset IFS
 printFile
-  # echo FileDat
-  # for process in "${fileDat[@]}" ; do
-  #   echo $process
-  # done
+
 addArrivedProcessToArray
 
 while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt 0 ] || [ ${#Queue3[@]} -gt 0 ]; do
   addArrivedProcessToArray
-  # echo FileDat
-  # for process in "${fileDat[@]}" ; do
-  #   echo $process
-  # done
-  # echo Queue1
-  # for process in "${Queue1[@]}" ; do
-  #   echo $process
-  # done
-  # echo Queue2
-  # for process in "${Queue2[@]}" ; do
-  #   echo $process
-  # done
-  # echo Queue3
-  # for process in "${Queue3[@]}" ; do
-  #   echo $process
-  # done
-  # echo ${#fileDat[@]} and ${#Queue1[@]} and ${#Queue2[@]} and ${#Queue3[@]}
   if [ ${#Queue1[@]} -gt 0 ] ; then
     for index in "${!Queue1[@]}"; do
       process=${Queue1[$index]}
@@ -124,6 +104,7 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt
       addArrivedProcessToArray
       i=$?
       if [ $i -lt 2 ] ; then
+        echo -n  [$processName] $currentTime' '
         break
       fi
     done
@@ -159,6 +140,7 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt
       addArrivedProcessToArray
       i=$?
       if [ $i -lt 3 ] ; then
+        echo -n  [$processName] $currentTime' '
         break
       fi
     done
