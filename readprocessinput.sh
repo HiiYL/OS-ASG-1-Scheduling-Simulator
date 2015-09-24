@@ -17,7 +17,7 @@ fi
 readarray fileDat < $1
 quantum=${fileDat[${#fileDat[@]}-1]} 
 unset fileDat[${#fileDat[@]}-1] #remove quantum 
-processCount=${#fileDat[@]} 
+processCount=${#fileDat[@]}
 
 # checks
 if [ $quantum -lt 2 ] || [ $quantum -gt 10 ] ; then
