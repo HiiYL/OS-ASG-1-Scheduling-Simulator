@@ -1,7 +1,7 @@
 . readprocessinput.sh
 function addArrivedProcessToArray()
 {
-  highest_priority_added=3
+  highest_priority_added=120
   for count in "${!fileDat[@]}"; do
     inner_process=${fileDat[$count]}
     inner_processSeparated=($inner_process)
@@ -34,11 +34,13 @@ currentTime=0
 IFS=$'\n' ##sort processes according to arrival time
 fileDat=($(for each in ${fileDat[@]}; do
   echo $each
-done | sort -n -k2,2 ))
+done | sort -n -k4,4 -k2,2 ))
 unset IFS
 printFile
 
 addArrivedProcessToArray
+
+echo -n "0 "
 
 while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt 0 ] || [ ${#Queue3[@]} -gt 0 ]; do
   addArrivedProcessToArray
@@ -65,7 +67,6 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt
         Queue1+=("${Queue1[$index]}")
       fi
       unset Queue1[$index]
-      sleep 0.250
       break
     done
   elif [ ${#Queue2[@]} -gt 0 ] ; then
@@ -108,7 +109,7 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt
         break
       fi
     done
-  else
+  elif [ ${#Queue3[@]} -gt 0 ] ; then
     while [ ${#Queue3[@]} -gt 0 ] ; do
       # echo Queue3
       # for process in "${Queue3[@]}" ; do
@@ -144,6 +145,13 @@ while [ ${#fileDat[@]} -gt 0 ] || [ ${#Queue1[@]} -gt 0 ] || [ ${#Queue2[@]} -gt
         break
       fi
     done
+  else
+    let currentTime=currentTime+1
+    addArrivedProcessToArray
+    i=$?
+    if [ $i -lt 3 ] ; then
+      echo -n  [*IDLE*] $currentTime' '
+    fi
   fi
 done
 
@@ -154,5 +162,5 @@ echo "Total   Waiting Time    :" $totalWaitingTime
 echo -n "Average Turnaround Time : "; bc <<< 'scale=2;'$totalTurnAroundTime'/'$processCount
 echo -n "Average Waiting Time    : "; bc <<< 'scale=2;'$totalWaitingTime'/'$processCount
 echo
-echo "~~~ END: Round Robin (RRBN) Scheduling ~~~"
+echo "~~~ END: Multilevel (MTL) Scheduling ~~~"
 echo
